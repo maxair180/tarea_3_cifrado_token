@@ -3,91 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecureText - Cifrado y Token</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <title>SecureText Pro - Sistema de Auditoría</title>
     <style>
-        :root { --primary: #2563eb; --secondary: #64748b; --success: #10b981; --danger: #ef4444; --dark: #1e293b; --light: #f8fafc; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--light); margin: 0; padding: 20px; color: var(--dark); }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        :root { --primary: #2563eb; --secondary: #64748b; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --dark: #1e293b; --light: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding: 20px; color: var(--dark); }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
         .hidden { display: none; }
         
-        h2, h3, h4 { margin-top: 0; color: var(--dark); }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        textarea { height: 100px; resize: vertical; }
-        
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        button { border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.9rem; flex: 1; }
+        button { border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; flex: 1; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: var(--secondary); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        .nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; margin-bottom: 25px; padding-bottom: 10px; }
+        .btn-copy { background: #e2e8f0; color: var(--dark); padding: 5px 10px; font-size: 0.8rem; flex: none; }
         
-        .table-container { margin-top: 30px; overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; background: white; min-width: 600px; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8fafc; font-weight: 600; color: #64748b; text-transform: uppercase; font-size: 0.75rem; }
-        tr:last-child td { border-bottom: none; }
-        .token-badge { background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-weight: bold; }
-
-        @media (max-width: 600px) {
-            .container { padding: 15px; }
-            .btn-group { flex-direction: column; }
-        }
+        .nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; margin-bottom: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+        th { background: #f1f5f9; }
+        
+        .status-success { color: var(--success); font-weight: bold; }
+        .status-fail { color: var(--danger); font-weight: bold; }
+        .status-inactive { color: var(--secondary); text-decoration: line-through; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .badge-token { background: #dbeafe; color: #1e40af; font-family: monospace; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="auth-section">
-        <h2>Bienvenido a SecureText</h2>
-        <p>Inicia sesión para gestionar tus mensajes cifrados.</p>
-        <input type="text" id="username" placeholder="Nombre de usuario (Ej: Christian)">
+        <h2>SecureText: Acceso al Sistema</h2>
+        <input type="text" id="username" placeholder="Usuario">
         <input type="password" id="password" placeholder="Contraseña">
         <div class="btn-group">
-            <button class="btn-primary" onclick="app.login()">Iniciar Sesión</button>
-            <button class="btn-secondary" onclick="app.register()">Registrarse</button>
+            <button class="btn-primary" onclick="app.login()">Entrar</button>
+            <button style="background:#64748b; color:white;" onclick="app.register()">Registrarse</button>
         </div>
     </div>
 
     <div id="main-section" class="hidden">
         <div class="nav">
-            <div>
-                <h3>Hola, <span id="user-display" style="color: var(--primary);"></span></h3>
-            </div>
-            <button class="btn-danger" onclick="app.logout()" style="flex: none; padding: 8px 15px;">Cerrar Sesión</button>
+            <h3>Usuario: <span id="user-display"></span></h3>
+            <button class="btn-danger" onclick="app.logout()" style="flex:none">Salir</button>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <section style="background: #f1f5f9; padding: 15px; border-radius: 8px;">
-                <h4>Cifrar Mensaje</h4>
-                <textarea id="text-to-encrypt" placeholder="Escribe el mensaje que deseas proteger..."></textarea>
-                <button class="btn-primary" onclick="app.encrypt()">Generar Token</button>
+            <section>
+                <h4>1. Cifrar Nuevo Mensaje</h4>
+                <textarea id="text-to-encrypt" placeholder="Mensaje secreto..."></textarea>
+                <button class="btn-primary" onclick="app.encrypt()">Generar y Guardar</button>
             </section>
 
-            <section style="background: #ecfdf5; padding: 15px; border-radius: 8px;">
-                <h4>Usar un Token</h4>
-                <input type="text" id="token-input" placeholder="Ingresa el token (Ej: A12B3C)">
-                <button class="btn-success" onclick="app.decryptByToken()">Descifrar Intento</button>
+            <section>
+                <h4>2. Descifrar con Token</h4>
+                <input type="text" id="token-input" placeholder="Pegue el token aquí">
+                <button class="btn-success" onclick="app.decryptByToken()">Validar Token</button>
             </section>
         </div>
 
         <section>
-            <h4 style="margin-top: 30px;">Tu Historial de Intentos</h4>
-            <div class="table-container">
+            <h4>Historial y Auditoría de Intentos</h4>
+            <div style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
                             <th>Token</th>
-                            <th>Original</th>
-                            <th>Usuario</th>
-                            <th>Último Intento de Lectura</th>
+                            <th>Contenido Original</th>
+                            <th>Estado</th>
+                            <th>Último Intento (Audit)</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="history-body">
-                        </tbody>
+                    <tbody id="history-body"></tbody>
                 </table>
             </div>
         </section>
@@ -95,127 +86,128 @@
 </div>
 
 <script>
-    // --- MODELO DE DATOS (ESPEJO DEL DIAGRAMA) ---
     class EncryptionRecord {
-        constructor(token, originalText, owner) {
+        constructor(token, text, owner) {
             this.token = token;
-            this.originalText = originalText;
+            this.originalText = text;
             this.owner = owner;
-            this.timestamp = "Pendiente de lectura"; // Se registra cuando se usa el token
+            this.status = "ACTIVO"; // ACTIVO, INACTIVO o FALLIDO
+            this.timestamp = "Sin intentos";
         }
     }
 
-    // --- LÓGICA DE LA APLICACIÓN ---
     class AppEngine {
         constructor() {
             this.currentUser = null;
-            // Cargar datos persistentes
             this.records = JSON.parse(localStorage.getItem('records')) || [];
             this.users = JSON.parse(localStorage.getItem('users')) || [];
             this.checkSession();
         }
 
+        // --- GESTIÓN DE ACCESO ---
         register() {
-            const user = document.getElementById('username').value.trim();
-            const pass = document.getElementById('password').value;
-
-            if(!user || !pass) return alert("Debes llenar ambos campos.");
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+            if(!u || !p) return alert("Campos vacíos");
+            if(this.users.find(user => user.username === u)) return alert("El usuario ya existe");
             
-            // Validar si el nombre de usuario ya existe (insensible a mayúsculas)
-            const exists = this.users.find(u => u.username.toLowerCase() === user.toLowerCase());
-            
-            if (exists) {
-                alert("El usuario '" + user + "' ya existe. Por favor inicia sesión.");
-            } else {
-                this.users.push({username: user, password: pass});
-                localStorage.setItem('users', JSON.stringify(this.users));
-                alert("Usuario registrado con éxito. ¡Ya puedes iniciar sesión!");
-            }
+            this.users.push({username: u, password: p});
+            localStorage.setItem('users', JSON.stringify(this.users));
+            alert("Registro exitoso");
         }
 
         login() {
-            const user = document.getElementById('username').value.trim();
-            const pass = document.getElementById('password').value;
-            
-            if(!user || !pass) return alert("Ingresa tus credenciales.");
-
-            const foundUser = this.users.find(u => u.username.toLowerCase() === user.toLowerCase());
-
-            if (foundUser) {
-                if (foundUser.password === pass) {
-                    this.currentUser = foundUser.username;
-                    sessionStorage.setItem('activeUser', this.currentUser);
-                    this.showMain();
-                } else {
-                    alert("Contraseña incorrecta.");
-                }
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+            const user = this.users.find(user => user.username === u && user.password === p);
+            if(user) {
+                this.currentUser = u;
+                sessionStorage.setItem('activeUser', u);
+                this.showMain();
             } else {
-                alert("El usuario no existe. Regístrate primero.");
+                alert("Credenciales inválidas");
             }
         }
 
+        // --- LÓGICA CORE ---
         encrypt() {
             const text = document.getElementById('text-to-encrypt').value.trim();
-            if(!text) return alert("Escribe algo para cifrar.");
+            if(!text) return;
 
-            // Generar un token único de 6 caracteres
             const token = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const newRec = new EncryptionRecord(token, text, this.currentUser);
             
-            const newRecord = new EncryptionRecord(token, text, this.currentUser);
-            this.records.push(newRecord);
-            
+            this.records.push(newRec);
             this.save();
             this.renderHistory();
             document.getElementById('text-to-encrypt').value = "";
-            alert("¡Mensaje guardado!\nTu Token es: " + token);
         }
 
         decryptByToken() {
-            const tokenInput = document.getElementById('token-input').value.trim().toUpperCase();
-            // Buscar el registro que pertenezca AL USUARIO actual
-            const record = this.records.find(r => r.token === tokenInput && r.owner === this.currentUser);
+            const tInput = document.getElementById('token-input').value.trim().toUpperCase();
+            const record = this.records.find(r => r.token === tInput && r.owner === this.currentUser);
 
             if(record) {
-                // Actualizar la fecha/hora del intento
-                record.timestamp = new Date().toLocaleString();
+                if(record.status === "INACTIVO") {
+                    alert("Este mensaje ha sido desactivado (Borrado Lógico).");
+                    return;
+                }
+                record.timestamp = `EXITOSO: ${new Date().toLocaleString()}`;
+                record.status = "ACTIVO"; 
+                alert("Mensaje: " + record.originalText);
+            } else {
+                // Auditoría de fallos: Si el token no existe, podrías registrar el error aquí
+                // Pero como solo mostramos el historial del dueño, alertamos el error.
+                alert("Token no encontrado o no autorizado.");
+            }
+            this.save();
+            this.renderHistory();
+        }
+
+        // --- BORRADO LÓGICO ---
+        toggleStatus(token) {
+            const record = this.records.find(r => r.token === token);
+            if(record) {
+                record.status = (record.status === "ACTIVO") ? "INACTIVO" : "ACTIVO";
                 this.save();
                 this.renderHistory();
-                alert("CONTENIDO DESCIFRADO:\n\n" + record.originalText);
-                document.getElementById('token-input').value = "";
-            } else {
-                alert("Error: Token inválido o no te pertenece.");
             }
+        }
+
+        // --- USABILIDAD (COPIAR) ---
+        copyToken(token) {
+            navigator.clipboard.writeText(token);
+            alert("Token " + token + " copiado al portapapeles");
         }
 
         renderHistory() {
             const body = document.getElementById('history-body');
             body.innerHTML = "";
-            
-            // Solo filtrar los registros del usuario logueado
-            const userRecords = this.records.filter(r => r.owner === this.currentUser);
+            const myRecords = this.records.filter(r => r.owner === this.currentUser);
 
-            if(userRecords.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay registros en tu historial.</td></tr>';
-                return;
-            }
-
-            userRecords.forEach(r => {
-                const row = `
+            myRecords.forEach(r => {
+                const isInactive = r.status === "INACTIVO";
+                body.innerHTML += `
                     <tr>
-                        <td><span class="token-badge">${r.token}</span></td>
-                        <td>${r.originalText}</td>
-                        <td>${r.owner}</td>
-                        <td>${r.timestamp}</td>
+                        <td>
+                            <span class="badge badge-token">${r.token}</span>
+                            <button class="btn-copy" onclick="app.copyToken('${r.token}')">📋</button>
+                        </td>
+                        <td class="${isInactive ? 'status-inactive' : ''}">${r.originalText}</td>
+                        <td><span class="${isInactive ? 'status-fail' : 'status-success'}">${r.status}</span></td>
+                        <td><small>${r.timestamp}</small></td>
+                        <td>
+                            <button class="btn-danger" style="padding:5px" onclick="app.toggleStatus('${r.token}')">
+                                ${isInactive ? 'Reactivar' : 'Desactivar'}
+                            </button>
+                        </td>
                     </tr>
                 `;
-                body.innerHTML += row;
             });
         }
 
-        save() {
-            localStorage.setItem('records', JSON.stringify(this.records));
-        }
-
+        save() { localStorage.setItem('records', JSON.stringify(this.records)); }
+        
         showMain() {
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('main-section').classList.remove('hidden');
@@ -224,22 +216,14 @@
         }
 
         checkSession() {
-            const savedUser = sessionStorage.getItem('activeUser');
-            if(savedUser) {
-                this.currentUser = savedUser;
-                this.showMain();
-            }
+            const s = sessionStorage.getItem('activeUser');
+            if(s) { this.currentUser = s; this.showMain(); }
         }
 
-        logout() {
-            sessionStorage.removeItem('activeUser');
-            location.reload();
-        }
+        logout() { sessionStorage.clear(); location.reload(); }
     }
 
-    // Inicializar aplicación
     const app = new AppEngine();
 </script>
-
 </body>
 </html>
