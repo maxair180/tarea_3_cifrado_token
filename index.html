@@ -29,6 +29,8 @@
         .status-inactive { text-decoration: line-through; color: var(--secondary); opacity: 0.6; }
         .badge-active { color: var(--success); font-weight: bold; }
         .badge-inactive { color: var(--danger); font-weight: bold; }
+
+        .helper-text { font-size: 0.75rem; color: var(--secondary); margin-top: -5px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -43,12 +45,28 @@
     </div>
 
     <div id="auth-section" class="card">
-        <h3>🔐 Panel de Control</h3>
-        <input type="text" id="username" placeholder="Usuario">
-        <input type="password" id="password" placeholder="Contraseña">
-        <div style="display:flex; gap:10px;">
-            <button class="btn-primary" onclick="app.login()">Entrar</button>
-            <button style="background:var(--secondary); color:white; width:100%;" onclick="app.register()">Crear Cuenta</button>
+        <h3>🔐 Acceso y Registro</h3>
+        
+        <div id="login-form">
+            <input type="text" id="username" placeholder="Usuario">
+            <input type="password" id="password" placeholder="Contraseña">
+            <div style="display:flex; gap:10px;">
+                <button class="btn-primary" onclick="app.login()">Entrar al Panel</button>
+                <button style="background:var(--secondary); color:white; width:100%;" onclick="app.toggleAuthMode(true)">¿No tienes cuenta? Regístrate</button>
+            </div>
+        </div>
+
+        <div id="register-form" class="hidden">
+            <h4 style="margin-bottom: 10px; color: var(--primary);">Crear Nueva Cuenta</h4>
+            <input type="text" id="reg-username" placeholder="Elige un nombre de usuario">
+            <input type="password" id="reg-password" placeholder="Contraseña (mínimo 8 caracteres)">
+            <p class="helper-text">Debe tener al menos 8 caracteres para mayor seguridad.</p>
+            <input type="password" id="reg-confirm-password" placeholder="Repite tu contraseña">
+            
+            <div style="display:flex; gap:10px;">
+                <button class="btn-success" style="width:100%" onclick="app.register()">Finalizar Registro</button>
+                <button style="background:var(--secondary); color:white; width:100%;" onclick="app.toggleAuthMode(false)">Volver al Login</button>
+            </div>
         </div>
     </div>
 
@@ -101,6 +119,11 @@
             this.checkSession();
         }
 
+        toggleAuthMode(isRegister) {
+            document.getElementById('login-form').classList.toggle('hidden', isRegister);
+            document.getElementById('register-form').classList.toggle('hidden', !isRegister);
+        }
+
         publicDecrypt() {
             const tInput = document.getElementById('public-token-input').value.trim().toUpperCase();
             const resultDiv = document.getElementById('public-result');
@@ -108,7 +131,7 @@
 
             if(record) {
                 if(record.status === "INACTIVO") {
-                    resultDiv.innerHTML = "❌ Error: Este mensaje ha sido desactivado por el emisor.";
+                    resultDiv.innerHTML = "❌ Error: Mensaje desactivado por el emisor.";
                     resultDiv.style.color = "red";
                 } else {
                     record.timestamp = `Público: ${new Date().toLocaleString()}`;
@@ -118,30 +141,42 @@
                     this.renderHistory(); 
                 }
             } else {
-                resultDiv.innerHTML = "❌ Error: Token no encontrado.";
+                resultDiv.innerHTML = "❌ Token no válido.";
                 resultDiv.style.color = "red";
             }
         }
 
         register() {
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value;
-            if(!u || !p) return alert("Completa los datos");
-            if(this.users.find(user => user.username === u)) return alert("El usuario ya existe");
+            const u = document.getElementById('reg-username').value.trim();
+            const p = document.getElementById('reg-password').value;
+            const pConf = document.getElementById('reg-confirm-password').value;
+
+            if(!u || !p || !pConf) return alert("Por favor, llena todos los campos.");
+            
+            if(p.length < 8) return alert("Seguridad insuficiente: La contraseña debe tener al menos 8 caracteres.");
+            
+            if(p !== pConf) return alert("Error: Las contraseñas no coinciden. Verifícalas.");
+            
+            if(this.users.find(user => user.username.toLowerCase() === u.toLowerCase())) {
+                return alert("Este nombre de usuario ya está ocupado.");
+            }
+
             this.users.push({username: u, password: p});
             localStorage.setItem('users', JSON.stringify(this.users));
-            alert("Cuenta creada exitosamente.");
+            alert("¡Registro exitoso! Ahora inicia sesión.");
+            this.toggleAuthMode(false);
         }
 
         login() {
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
-            const user = this.users.find(user => user.username === u && user.password === p);
+            const user = this.users.find(user => user.username.toLowerCase() === u.toLowerCase() && user.password === p);
+            
             if(user) {
-                this.currentUser = u;
-                sessionStorage.setItem('activeUser', u);
+                this.currentUser = user.username;
+                sessionStorage.setItem('activeUser', this.currentUser);
                 this.showMain();
-            } else { alert("Usuario o contraseña incorrectos"); }
+            } else { alert("Usuario o contraseña incorrectos."); }
         }
 
         encrypt() {
@@ -152,12 +187,12 @@
             this.save();
             this.renderHistory();
             document.getElementById('text-to-encrypt').value = "";
-            alert("Token generado: " + token);
+            alert("Token generado con éxito.");
         }
 
         copyToken(token) {
             navigator.clipboard.writeText(token).then(() => {
-                alert("Token " + token + " copiado al portapapeles");
+                alert("Token copiado.");
             });
         }
 
