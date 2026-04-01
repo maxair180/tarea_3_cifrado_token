@@ -3,25 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Text</title>
+    <title>YAYA´s Security</title>
     <style>
         :root { --primary: #2563eb; --secondary: #64748b; --success: #10b981; --danger: #ef4444; --dark: #1e293b; --light: #f8fafc; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding: 20px; color: var(--dark); }
-        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
         .hidden { display: none; }
         
         .card { border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 20px; background: #fff; }
         .public-zone { background: #f0fdf4; border: 2px solid #10b981; }
         
         input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-        button { border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-success { background: var(--success); color: white; width: 100%; }
-        .btn-danger { background: var(--danger); color: white; }
+        button { border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-copy { background: #e2e8f0; color: var(--dark); padding: 5px 8px; font-size: 0.75rem; margin-left: 5px; }
+        .btn-copy:hover { background: #cbd5e1; }
+
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; }
-        .status-inactive { text-decoration: line-through; color: var(--secondary); }
+        th { background: #f8fafc; color: #64748b; }
+        
+        .status-inactive { text-decoration: line-through; color: var(--secondary); opacity: 0.6; }
+        .badge-active { color: var(--success); font-weight: bold; }
+        .badge-inactive { color: var(--danger); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -30,10 +37,9 @@
     
     <div id="public-section" class="card public-zone">
         <h2 style="color: #047857; margin-top:0;">🔓 Consulta Rápida</h2>
-        <p>¿Tienes un token? Ingrésalo aquí para ver el mensaje original sin iniciar sesión.</p>
-        <input type="text" id="public-token-input" placeholder="Ingresa el Token (Ej: B4X1A9)">
-        <button class="btn-success" onclick="app.publicDecrypt()">Descifrar Mensaje</button>
-        <div id="public-result" style="margin-top:15px; font-weight:bold; color: var(--dark);"></div>
+        <input type="text" id="public-token-input" placeholder="Ingresa el Token para descifrar">
+        <button class="btn-success" style="width:100%" onclick="app.publicDecrypt()">Descifrar Mensaje</button>
+        <div id="public-result" style="margin-top:15px; font-weight:bold;"></div>
     </div>
 
     <div id="auth-section" class="card">
@@ -47,30 +53,32 @@
     </div>
 
     <div id="main-section" class="hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h3>Panel de: <span id="user-display" style="color:var(--primary)"></span></h3>
-            <button class="btn-danger" onclick="app.logout()">Cerrar Sesión</button>
+            <button class="btn-danger" style="width:auto" onclick="app.logout()">Cerrar Sesión</button>
         </div>
 
         <div class="card">
-            <h4>Cifrar Texto</h4>
+            <h4>Cifrar Nuevo Texto</h4>
             <textarea id="text-to-encrypt" placeholder="Escribe tu mensaje secreto..."></textarea>
             <button class="btn-primary" onclick="app.encrypt()">Generar Token</button>
         </div>
 
         <h4>Tu Historial de Auditoría</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>Token</th>
-                    <th>Mensaje</th>
-                    <th>Estado</th>
-                    <th>Último Acceso</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="history-body"></tbody>
-        </table>
+        <div style="overflow-x:auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Token</th>
+                        <th>Mensaje</th>
+                        <th>Estado</th>
+                        <th>Último Acceso</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -93,11 +101,9 @@
             this.checkSession();
         }
 
-        // --- FUNCION PÚBLICA (SIN LOGIN) ---
         publicDecrypt() {
             const tInput = document.getElementById('public-token-input').value.trim().toUpperCase();
             const resultDiv = document.getElementById('public-result');
-            
             const record = this.records.find(r => r.token === tInput);
 
             if(record) {
@@ -112,12 +118,11 @@
                     this.renderHistory(); 
                 }
             } else {
-                resultDiv.innerHTML = "❌ Error: Token no encontrado en el sistema.";
+                resultDiv.innerHTML = "❌ Error: Token no encontrado.";
                 resultDiv.style.color = "red";
             }
         }
 
-        // --- GESTIÓN DE USUARIOS ---
         register() {
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
@@ -125,7 +130,7 @@
             if(this.users.find(user => user.username === u)) return alert("El usuario ya existe");
             this.users.push({username: u, password: p});
             localStorage.setItem('users', JSON.stringify(this.users));
-            alert("Cuenta creada.");
+            alert("Cuenta creada exitosamente.");
         }
 
         login() {
@@ -136,18 +141,24 @@
                 this.currentUser = u;
                 sessionStorage.setItem('activeUser', u);
                 this.showMain();
-            } else { alert("Error en credenciales"); }
+            } else { alert("Usuario o contraseña incorrectos"); }
         }
 
         encrypt() {
             const text = document.getElementById('text-to-encrypt').value.trim();
-            if(!text) return;
+            if(!text) return alert("Escribe un mensaje");
             const token = Math.random().toString(36).substring(2, 8).toUpperCase();
             this.records.push(new EncryptionRecord(token, text, this.currentUser));
             this.save();
             this.renderHistory();
             document.getElementById('text-to-encrypt').value = "";
             alert("Token generado: " + token);
+        }
+
+        copyToken(token) {
+            navigator.clipboard.writeText(token).then(() => {
+                alert("Token " + token + " copiado al portapapeles");
+            });
         }
 
         toggleStatus(token) {
@@ -169,26 +180,38 @@
                 const inactive = r.status === "INACTIVO";
                 body.innerHTML += `
                     <tr>
-                        <td><b>${r.token}</b></td>
+                        <td>
+                            <b>${r.token}</b>
+                            <button class="btn-copy" onclick="app.copyToken('${r.token}')">📋 Copiar</button>
+                        </td>
                         <td class="${inactive ? 'status-inactive' : ''}">${r.originalText}</td>
-                        <td>${r.status}</td>
+                        <td class="${inactive ? 'badge-inactive' : 'badge-active'}">${r.status}</td>
                         <td><small>${r.timestamp}</small></td>
-                        <td><button onclick="app.toggleStatus('${r.token}')">${inactive ? 'Activar' : 'Baja'}</button></td>
+                        <td>
+                            <button class="${inactive ? 'btn-success' : 'btn-danger'}" 
+                                    style="width: 110px;"
+                                    onclick="app.toggleStatus('${r.token}')">
+                                ${inactive ? 'Activar' : 'Desactivar'}
+                            </button>
+                        </td>
                     </tr>`;
             });
         }
 
         save() { localStorage.setItem('records', JSON.stringify(this.records)); }
+        
         showMain() {
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('main-section').classList.remove('hidden');
             document.getElementById('user-display').innerText = this.currentUser;
             this.renderHistory();
         }
+
         checkSession() {
             const s = sessionStorage.getItem('activeUser');
             if(s) { this.currentUser = s; this.showMain(); }
         }
+
         logout() { sessionStorage.clear(); location.reload(); }
     }
 
